@@ -174,12 +174,12 @@ class App(ctk.CTk):
 
     def auto_check_system(self):
         def check_task():
-            self.status_label.configure(text="● Проверка соединения с ИИ...", text_color="yellow")
+            self.after(0, lambda: self.status_label.configure(text="● Проверка соединения с ИИ...", text_color="yellow"))
             success, message = ai_client.test_connection()
             if success:
-                self.status_label.configure(text="● Готов к работе", text_color="#00FF00")
+                self.after(0, lambda: self.status_label.configure(text="● Готов к работе", text_color="#00FF00"))
             else:
-                self.status_label.configure(text="● Ошибка: ИИ недоступен", text_color="#FF4444")
+                self.after(0, lambda: self.status_label.configure(text="● Ошибка: ИИ недоступен", text_color="#FF4444"))
 
         threading.Thread(target=check_task, daemon=True).start()
 
