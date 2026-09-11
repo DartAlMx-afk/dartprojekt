@@ -3,7 +3,6 @@ import os
 import sys
 
 def setup_logger():
-    # Ensure logs directory exists
     log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
     os.makedirs(log_dir, exist_ok=True)
 

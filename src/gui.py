@@ -8,11 +8,9 @@ from .hotkeys import hotkey_manager
 from .ai_client import ai_client
 from .notifier import Notifier
 
-# Minimalist Black & White Theme
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
 
-# Attempt to load pywinstyles for Glass/Acrylic effect on Windows
 try:
     import pywinstyles
     HAS_WINSTYLES = True
@@ -109,7 +107,6 @@ class App(ctk.CTk):
         self.setup_ui()
         logger.info("GUI initialized.")
 
-        # Trigger auto-check on startup
         self.after(500, self.auto_check_system)
 
     def setup_ui(self):
@@ -123,7 +120,6 @@ class App(ctk.CTk):
         self.backend_option = ctk.CTkSegmentedButton(self, values=["Ollama", "LM Studio"], variable=self.backend_var, command=self.on_backend_change)
         self.backend_option.grid(row=1, column=0, padx=40, pady=(5, 20), sticky="ew")
 
-        # Config Frame (Replaces separate frames for a cleaner look)
         self.config_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.config_frame.grid(row=2, column=0, padx=40, pady=5, sticky="ew")
         self.config_frame.grid_columnconfigure(0, weight=1)
@@ -152,7 +148,6 @@ class App(ctk.CTk):
 
 
     def on_backend_change(self, choice):
-        # Update entry fields based on choice
         self.url_entry.delete(0, "end")
         self.model_entry.delete(0, "end")
 

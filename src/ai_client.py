@@ -9,7 +9,7 @@ class AIClient:
 
         backend = config_manager.get("backend")
         temperature = float(config_manager.get("temperature"))
-        logger.info(f"Sending text to AI via {backend} (Temp: {temperature})")
+        logger.info(f"Sending text to AI via {backend} (Temp: {temperature}, Timeout: {timeout_sec}s)")
         logger.debug(f"Full prompt being sent:\n{prompt}")
 
         try:
@@ -26,7 +26,6 @@ class AIClient:
                 }, timeout=timeout_sec)
                 response.raise_for_status()
 
-                # Check different possible response formats for robustness
                 data = response.json()
                 if "response" in data:
                     result = data.get("response", "").strip()
@@ -55,11 +54,9 @@ class AIClient:
 
                 message = data["choices"][0]["message"]
 
-                # Handling empty 'content' string issue (specifically seen with models like Qwen that output reasoning_content)
                 result = message.get("content", "").strip()
                 reasoning = message.get("reasoning_content", "").strip()
 
-                # If standard content is empty but the model returned reasoning_content, use that.
                 if not result and reasoning:
                     logger.info("Main content was empty, extracting from reasoning_content instead.")
                     result = reasoning

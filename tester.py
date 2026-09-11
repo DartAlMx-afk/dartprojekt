@@ -18,7 +18,6 @@ except ImportError as e:
     print("Пожалуйста, убедитесь, что вы запустили install.bat")
     sys.exit(1)
 
-# Import our internal modules
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from src.config import config_manager
 from src.ai_client import ai_client
@@ -33,10 +32,9 @@ try:
         print("[OK] Чтение и запись буфера обмена работают исправно.")
     else:
         print("[ERROR] Не удалось записать/прочитать из буфера обмена.")
-    pyperclip.copy(original) # Restore
+    pyperclip.copy(original)
 except Exception as e:
     print(f"[ERROR] Ошибка работы с буфером обмена: {e}")
-
 
 print("\n[2/3] Проверка горячих клавиш (Keyboard Hooks)...")
 test_hotkey = "ctrl+alt+shift+t"
@@ -47,7 +45,6 @@ try:
     print(f"[OK] Библиотека keyboard успешно регистрирует системные хуки на Windows.")
 except Exception as e:
     print(f"[ERROR] Не удалось зарегистрировать горячую клавишу. Запустите программу от имени Администратора. Ошибка: {e}")
-
 
 print("\n[3/3] Проверка связи с ИИ сервером...")
 backend = config_manager.get("backend")
@@ -74,7 +71,6 @@ if success:
 else:
     print(f"[ERROR] Ошибка подключения: {msg}")
     print("Убедитесь, что сервер Ollama или LM Studio запущен и порты открыты.")
-
 
 print("\n" + "="*50)
 print("Диагностика завершена. Подробные логи можно найти в файле logs/app.log")
