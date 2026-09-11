@@ -75,19 +75,27 @@ class HotkeyManager:
 
             if fixed_text:
                 logger.info("Successfully received corrected text. Ready to paste.")
-                pyperclip.copy(fixed_text)
-
-                time.sleep(paste_delay)
-
-                logger.debug(f"Sending 'shift+insert'...")
-                keyboard.send("shift+insert")
-                time.sleep(0.1)
-                Notifier.show_success()
+                try:
+                    pyperclip.copy(fixed_text)
+                    time.sleep(paste_delay)
+                    logger.debug(f"Sending 'shift+insert'...")
+                    keyboard.send("shift+insert")
+                    time.sleep(0.1)
+                    Notifier.show_success()
+                except Exception as e:
+                    logger.error(f"Failed to paste corrected text: {e}")
+                    Notifier.show_error()
             else:
                 logger.warning("Failed to get corrected text from AI. Restoring clipboard.")
-                pyperclip.copy(original_clipboard)
+                try:
+                    pyperclip.copy(original_clipboard)
+                except Exception as e:
+                    logger.error(f"Failed to restore original clipboard: {e}")
                 Notifier.show_error()
 
+        except Exception as general_error:
+            logger.error(f"Unexpected error in hotkey thread: {general_error}")
+            Notifier.show_error()
         finally:
             # Ensure the lock is released even if an error occurs
             self.is_processing = False

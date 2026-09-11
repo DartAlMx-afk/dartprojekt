@@ -2,7 +2,8 @@ import json
 import os
 from .logger import logger
 
-CONFIG_FILE = "config.json"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 
 class ConfigManager:
     def __init__(self):
@@ -16,7 +17,9 @@ class ConfigManager:
             "temperature": 0.3,
             "system_prompt": "ОБЯЗАТЕЛЬНО сохрани исходный язык текста (например, русский). Ничего не придумывай, не переводи, просто исправь грамматические, орфографические и пунктуационные ошибки в следующем тексте. В ответе выведи только исправленный текст без дополнительных комментариев и пояснений:\n\n",
             "copy_delay": 0.3,
-            "paste_delay": 0.1
+            "paste_delay": 0.1,
+            "gguf_model_path": "",
+            "autostart": False
         }
         self.load()
 

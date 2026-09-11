@@ -1,8 +1,39 @@
 import requests
+import threading
 from .logger import logger
 from .config import config_manager
 
 class AIClient:
+    def __init__(self):
+        self.llm = None
+        self.loading_gguf = False
+        self.current_gguf_path = None
+
+    def load_gguf_model(self, path):
+        if not path or path == self.current_gguf_path:
+            return
+
+        def load_thread():
+            self.loading_gguf = True
+            logger.info(f"Loading GGUF model from {path} in background...")
+            try:
+                from llama_cpp import Llama
+                self.llm = Llama(model_path=path, n_ctx=2048, n_threads=max(1, threading.active_count() - 1))
+                self.current_gguf_path = path
+                logger.info("GGUF model loaded successfully.")
+            except ImportError:
+                logger.error("llama_cpp module not found. Please install llama-cpp-python.")
+                self.llm = None
+                self.current_gguf_path = None
+            except Exception as e:
+                logger.error(f"Error loading GGUF model: {e}")
+                self.llm = None
+                self.current_gguf_path = None
+            finally:
+                self.loading_gguf = False
+
+        threading.Thread(target=load_thread, daemon=True).start()
+
     def fix_text(self, text, timeout_sec=120):
         prompt_prefix = config_manager.get("system_prompt")
         prompt = f"{prompt_prefix}{text}"
@@ -64,6 +95,24 @@ class AIClient:
                 logger.debug(f"Extracted LM Studio response: {result}")
                 return result if result else None
 
+            elif backend == "Local GGUF":
+                if self.loading_gguf:
+                    logger.warning("GGUF model is still loading.")
+                    return "Модель еще загружается, пожалуйста подождите..."
+                if not self.llm:
+                    logger.error("GGUF model not loaded.")
+                    return "Ошибка: Модель GGUF не загружена."
+
+                output = self.llm(
+                    prompt,
+                    max_tokens=512,
+                    temperature=temperature,
+                    echo=False
+                )
+                result = output['choices'][0]['text'].strip()
+                logger.debug(f"GGUF response: {result}")
+                return result if result else None
+
         except Exception as e:
             logger.error(f"Error communicating with AI: {e}")
             return None
@@ -90,6 +139,13 @@ class AIClient:
                 response = requests.get(models_url, timeout=timeout_sec)
                 response.raise_for_status()
                 return True, "Успешное подключение к LM Studio!"
+
+            elif backend == "Local GGUF":
+                if self.loading_gguf:
+                     return True, "Модель GGUF загружается..."
+                if self.llm:
+                     return True, "Модель GGUF загружена!"
+                return False, "Модель GGUF не загружена (проверьте путь)"
 
         except Exception as e:
             error_msg = f"Ошибка подключения: {str(e)}"

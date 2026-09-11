@@ -69,8 +69,12 @@ class AdvancedSettingsWindow(ctk.CTkToplevel):
         self.pdelay_entry.insert(0, str(config_manager.get("paste_delay")))
         self.pdelay_entry.grid(row=1, column=1, padx=5, pady=(0, 5))
 
+        self.autostart_var = ctk.BooleanVar(value=config_manager.get("autostart"))
+        self.autostart_checkbox = ctk.CTkCheckBox(self, text="Автозагрузка с Windows", variable=self.autostart_var)
+        self.autostart_checkbox.grid(row=8, column=0, padx=20, pady=(10, 0), sticky="w")
+
         self.save_button = ctk.CTkButton(self, text="Применить", command=self.save_and_close, fg_color="gray20", hover_color="gray30", border_width=1, border_color="gray40")
-        self.save_button.grid(row=8, column=0, padx=20, pady=20, sticky="ew")
+        self.save_button.grid(row=9, column=0, padx=20, pady=20, sticky="ew")
 
         self.protocol("WM_DELETE_WINDOW", self.save_and_close)
 
@@ -81,6 +85,12 @@ class AdvancedSettingsWindow(ctk.CTkToplevel):
             config_manager.set("system_prompt", self.prompt_textbox.get("0.0", "end").strip())
             config_manager.set("copy_delay", float(self.cdelay_entry.get().strip()))
             config_manager.set("paste_delay", float(self.pdelay_entry.get().strip()))
+
+            enable_autostart = self.autostart_var.get()
+            config_manager.set("autostart", enable_autostart)
+            from .autostart import setup_autostart
+            setup_autostart(enable_autostart)
+
             config_manager.save()
             logger.info("Advanced settings updated.")
 
@@ -117,7 +127,7 @@ class App(ctk.CTk):
 
         self.backend_var = ctk.StringVar(value=config_manager.get("backend"))
 
-        self.backend_option = ctk.CTkSegmentedButton(self, values=["Ollama", "LM Studio"], variable=self.backend_var, command=self.on_backend_change)
+        self.backend_option = ctk.CTkSegmentedButton(self, values=["Ollama", "LM Studio", "Local GGUF"], variable=self.backend_var, command=self.on_backend_change)
         self.backend_option.grid(row=1, column=0, padx=40, pady=(5, 20), sticky="ew")
 
         self.config_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -131,8 +141,16 @@ class App(ctk.CTk):
 
         self.model_label = ctk.CTkLabel(self.config_frame, text="Название модели:", text_color="gray70")
         self.model_label.grid(row=2, column=0, pady=(5, 0), sticky="w")
-        self.model_entry = ctk.CTkEntry(self.config_frame, border_width=1, corner_radius=5)
-        self.model_entry.grid(row=3, column=0, pady=(0, 15), sticky="ew")
+
+        self.model_entry_frame = ctk.CTkFrame(self.config_frame, fg_color="transparent")
+        self.model_entry_frame.grid(row=3, column=0, pady=(0, 15), sticky="ew")
+        self.model_entry_frame.grid_columnconfigure(0, weight=1)
+
+        self.model_entry = ctk.CTkEntry(self.model_entry_frame, border_width=1, corner_radius=5)
+        self.model_entry.grid(row=0, column=0, sticky="ew")
+
+        self.browse_button = ctk.CTkButton(self.model_entry_frame, text="Обзор", width=60, command=self.browse_gguf)
+        self.browse_button.grid(row=0, column=1, padx=(5, 0))
 
         self.on_backend_change(config_manager.get("backend"))
 
@@ -148,15 +166,43 @@ class App(ctk.CTk):
 
 
     def on_backend_change(self, choice):
+        self.url_entry.configure(state="normal")
         self.url_entry.delete(0, "end")
         self.model_entry.delete(0, "end")
 
         if choice == "Ollama":
             self.url_entry.insert(0, config_manager.get("ollama_url"))
             self.model_entry.insert(0, config_manager.get("ollama_model"))
-        else:
+            self.browse_button.grid_remove()
+            self.model_label.configure(text="Название модели:")
+        elif choice == "LM Studio":
+            self.url_entry.configure(state="normal")
             self.url_entry.insert(0, config_manager.get("lmstudio_url"))
             self.model_entry.insert(0, config_manager.get("lmstudio_model"))
+            self.browse_button.grid_remove()
+            self.model_label.configure(text="Название модели:")
+        elif choice == "Local GGUF":
+            self.url_entry.insert(0, "Локальный файл (URL не требуется)")
+            self.url_entry.configure(state="disabled")
+            self.model_entry.insert(0, config_manager.get("gguf_model_path"))
+            self.browse_button.grid()
+            self.model_label.configure(text="Путь к файлу .gguf:")
+            from .ai_client import ai_client
+            ai_client.load_gguf_model(config_manager.get("gguf_model_path"))
+
+    def browse_gguf(self):
+        from customtkinter import filedialog
+        filename = filedialog.askopenfilename(
+            title="Выберите GGUF файл",
+            filetypes=[("GGUF Files", "*.gguf"), ("All Files", "*.*")]
+        )
+        if filename:
+            self.model_entry.delete(0, "end")
+            self.model_entry.insert(0, filename)
+            config_manager.set("gguf_model_path", filename)
+            config_manager.save()
+            from .ai_client import ai_client
+            ai_client.load_gguf_model(filename)
 
     def save_settings(self):
         backend = self.backend_var.get()
@@ -165,9 +211,11 @@ class App(ctk.CTk):
         if backend == "Ollama":
             config_manager.set("ollama_url", self.url_entry.get().strip())
             config_manager.set("ollama_model", self.model_entry.get().strip())
-        else:
+        elif backend == "LM Studio":
             config_manager.set("lmstudio_url", self.url_entry.get().strip())
             config_manager.set("lmstudio_model", self.model_entry.get().strip())
+        elif backend == "Local GGUF":
+            config_manager.set("gguf_model_path", self.model_entry.get().strip())
 
         config_manager.save()
         logger.info("Main settings updated via GUI.")

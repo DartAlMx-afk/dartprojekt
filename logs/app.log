@@ -1,8 +1,0 @@
-2026-09-11 11:05:56,947 - DEBUG - Logger initialized successfully. Logging to logs/app.log
-2026-09-11 11:05:56,948 - INFO - Configuration saved successfully.
-2026-09-11 11:05:56,950 - INFO - Testing connection for Ollama...
-2026-09-11 11:05:56,959 - ERROR - Ошибка подключения: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError("HTTPConnection(host='localhost', port=11434): Failed to establish a new connection: [Errno 111] Connection refused"))
-2026-09-11 11:08:04,231 - DEBUG - Logger initialized successfully. Logging to logs/app.log
-2026-09-11 11:08:04,232 - INFO - Configuration loaded from config.json.
-2026-09-11 11:08:04,234 - INFO - Testing connection for Ollama...
-2026-09-11 11:08:04,239 - ERROR - Ошибка подключения: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/generate (Caused by NewConnectionError("HTTPConnection(host='localhost', port=11434): Failed to establish a new connection: [Errno 111] Connection refused"))

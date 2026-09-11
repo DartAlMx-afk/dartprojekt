@@ -3,3 +3,4 @@ pyperclip
 requests
 customtkinter
 pywinstyles
+llama-cpp-python
